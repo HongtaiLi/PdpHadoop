@@ -22,7 +22,7 @@ public class JsonMapper extends Mapper<LongWritable,CpdpRecord,Text,Text>{
 		
 		try {
 			String sublot_id = pdpRecord.SUBLOT_ID;
-			String grade = pdpRecord.GRADE;
+			String grade = pdpRecord.FLOW_GRADE;
 			String char_id = pdpRecord.CHAR_ID;
 			String val_tbl = pdpRecord.VALUE_TBL;
 			String resv = pdpRecord.RESV_FIELD4;

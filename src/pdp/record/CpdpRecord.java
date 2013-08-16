@@ -18,7 +18,7 @@ public class CpdpRecord implements Writable, DBWritable {
 	// int SLOT_NO;
 	// String GRADE;
 	public String SUBLOT_ID;
-	public String GRADE;
+	public String FLOW_GRADE;
 	public int SLOT_NO;
 	//public int S
 	public String CHAR_ID;
@@ -33,7 +33,7 @@ public class CpdpRecord implements Writable, DBWritable {
 		// TODOAuto-generated method stub
 		this.SUBLOT_ID = Text.readString(in);
 		this.SLOT_NO = in.readInt();
-		this.GRADE = Text.readString(in);
+		this.FLOW_GRADE = Text.readString(in);
 		this.CHAR_ID = Text.readString(in);
 		this.VALUE_TBL = Text.readString(in);
 		this.RESV_FIELD4 = Text.readString(in);
@@ -51,7 +51,7 @@ public class CpdpRecord implements Writable, DBWritable {
 		// TODO Auto-generatedmethod stub
 		Text.writeString(out, this.SUBLOT_ID);
 		out.writeInt(this.SLOT_NO);
-		Text.writeString(out, this.GRADE);
+		Text.writeString(out, this.FLOW_GRADE);
 		Text.writeString(out, this.CHAR_ID);
 		Text.writeString(out, this.VALUE_TBL);
 		Text.writeString(out, this.RESV_FIELD4);
@@ -64,7 +64,7 @@ public class CpdpRecord implements Writable, DBWritable {
 		// TODOAuto-generated method stub
 		this.SUBLOT_ID = result.getString("SUBLOT_ID");
 		this.SLOT_NO = result.getInt("SLOT_NO");
-		this.GRADE = result.getString("GRADE");
+		this.FLOW_GRADE = result.getString("FLOW_GRADE");
 		this.CHAR_ID = result.getString("CHAR_ID");
 		this.VALUE_TBL = result.getString("VALUE_TBL");
 		this.RESV_FIELD4 = result.getString("RESV_FIELD4");
@@ -80,7 +80,7 @@ public class CpdpRecord implements Writable, DBWritable {
 	public void write(PreparedStatement stmt) throws SQLException {
 		// TODO Auto-generatedmethod stub
 		stmt.setString(1, this.SUBLOT_ID);
-		stmt.setString(4, this.GRADE);
+		stmt.setString(4, this.FLOW_GRADE);
 		stmt.setInt(3, this.SLOT_NO);
 		stmt.setString(11, this.CHAR_ID);
 		stmt.setString(12, this.VALUE_TBL);

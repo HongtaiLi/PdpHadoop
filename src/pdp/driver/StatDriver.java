@@ -156,7 +156,7 @@ public class StatDriver {
 			stmt = connection.createStatement();
 			stmt.execute(truncateSql);
 		} else {
-
+			
 			String createsql = "CREATE TABLE " + outputTable
 					+ " (CHAR_ID varchar(100) not NULL, " + "COUNT varchar(100), "
 					+ "DISTINCTVALUES varchar(100), " + "STD varchar(45), "
