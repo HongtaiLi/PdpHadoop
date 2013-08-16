@@ -156,7 +156,7 @@ public class JsonConverterDriver {
 			DBConfiguration.configureDB(job.getConfiguration(),
 					"com.mysql.jdbc.Driver", url, user, pass);
 
-			String[] fields = {"SUBLOT_ID","GRADE","SLOT_NO", "CHAR_ID", "VALUE_TBL",
+			String[] fields = {"SUBLOT_ID","FlOW_GRADE","SLOT_NO", "CHAR_ID", "VALUE_TBL",
 					"RESV_FIELD4" };
 
 			DataDrivenDBInputFormat.setInput(job, CpdpRecord.class, dbTable,
