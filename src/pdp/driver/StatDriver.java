@@ -1,5 +1,6 @@
 package pdp.driver;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -7,6 +8,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -68,20 +70,20 @@ public class StatDriver {
 		o.setRequired(false);
 		options.addOption(o);
 
-		o = new Option("url", "url", true, "address of database");
-		o.setArgName("db-address");
-		o.setRequired(false);
-		options.addOption(o);
-
-		o = new Option("u", "user", true, "username");
-		o.setArgName("user-name");
-		o.setRequired(false);
-		options.addOption(o);
-
-		o = new Option("p", "password", true, "password of database");
-		o.setArgName("password");
-		o.setRequired(false);
-		options.addOption(o);
+//		o = new Option("url", "url", true, "address of database");
+//		o.setArgName("db-address");
+//		o.setRequired(false);
+//		options.addOption(o);
+//
+//		o = new Option("u", "user", true, "username");
+//		o.setArgName("user-name");
+//		o.setRequired(false);
+//		options.addOption(o);
+//
+//		o = new Option("p", "password", true, "password of database");
+//		o.setArgName("password");
+//		o.setRequired(false);
+//		options.addOption(o);
 		
 		options.addOption("d", "debug", false, "switch on DEBUG log level");
 		CommandLineParser parser = new PosixParser();
@@ -102,6 +104,9 @@ public class StatDriver {
 		return cmd;
 	}
 
+	
+	
+	
 	/**
 	 * @param args
 	 * @throws IOException
@@ -112,10 +117,43 @@ public class StatDriver {
 
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
+		
+		String configFileDir = System.getenv("PDP_HOME");
+		String hadoopHost = null;
+		String hadoopPort = null;
+		String dbHost = null;
+		String dbPort = null;
+		String dbName = null;
+		String dbUser = null;
+		String dbPass = null;
+		String lsdaDbHost = null;
+		String lsdaDbName = null;
+		String lsdaDbPort = null;
+		String lsdaDbUser = null;
+		String lsdaDbPass = null;
+		
+		if (configFileDir != null) {
+			Properties prop = new Properties();
+			String propFileName = "conf/lsda.conf";
 
+			prop.load(new FileReader(configFileDir + "/" + propFileName));
+			hadoopHost = prop.getProperty("lsda.hadoop.host");
+			hadoopPort = prop.getProperty("lsda.hadoop.port");
+			dbHost = prop.getProperty("lsda.pdp.db.host");
+			dbPort = prop.getProperty("lsda.pdp.db.port");
+			dbUser = prop.getProperty("lsda.pdp.db.user");
+			dbPass = prop.getProperty("lsda.pdp.db.pass");
+			
+			lsdaDbHost = prop.getProperty("lsda.db.host");
+			lsdaDbName = prop.getProperty("lsda.db.name");
+			lsdaDbPort = prop.getProperty("lsda.db.port");
+			lsdaDbUser = prop.getProperty("lsda.db.user");
+			lsdaDbPass = prop.getProperty("lsda.db.pass");
+		}
+		
 		Configuration conf = new Configuration();
 		conf.set("hadoop.job.ugi", "hadoop,supergroup");
-		conf.set("mapred.job.tracker", "datamining-node01.cs.fiu.edu:30001");
+		conf.set("mapred.job.tracker", hadoopHost+":"+hadoopPort);
 		conf.set("dfs.socket.timeout", "1210000");
 
 		conf.set("mapred.map.tasks", "100");
@@ -129,10 +167,11 @@ public class StatDriver {
 		// get details
 		String table = cmd.getOptionValue("t");
 		String outputTable = cmd.getOptionValue("o");
-		String url = cmd.getOptionValue("url");
-		String user = cmd.getOptionValue("u");
-		String pass = cmd.getOptionValue("p");
-
+		String pdpUrl = "jdbc:mysql://"+dbHost+":"+dbPort+"/"+dbName;
+		String lsdaUrl = "jdbc:mysql://"+lsdaDbHost+":"+lsdaDbPort+"/"+lsdaDbName;
+	//		String user = cmd.getOptionValue("u");
+//		String pass = cmd.getOptionValue("p");
+		
 		String[] tableList = table.split(",");
 
 		
@@ -146,10 +185,12 @@ public class StatDriver {
 		for(String tbl:tableList){
 			FileInputFormat.addInputPath(job, new Path(hdfsRoot + tbl));
 		}
-
-		Connection connection = DriverManager.getConnection(url, user, pass);
+		
+		Connection connection = DriverManager.getConnection(pdpUrl, dbUser, dbPass);
 		DatabaseMetaData metadata = connection.getMetaData();
 		ResultSet resultSet = metadata.getTables(null, null, outputTable, null);
+		
+		
 		Statement stmt = null;
 		if (resultSet.next()) {
 			String truncateSql = "TRUNCATE TABLE " + outputTable;
@@ -176,7 +217,7 @@ public class StatDriver {
 		connection.close();
 
 		DBConfiguration.configureDB(job.getConfiguration(),
-				"com.mysql.jdbc.Driver", url, user, pass);
+				"com.mysql.jdbc.Driver", pdpUrl, dbUser, dbPass);
 
 		String[] resultFields = { "CHAR_ID", "COUNT", "DISTINCTVALUES", "STD",
 				"MEDIAN", "MEAN", "MAX", "MIN", "DISTRIBUTION", "KURTOSIS",
