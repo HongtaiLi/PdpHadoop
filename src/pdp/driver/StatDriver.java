@@ -134,7 +134,7 @@ public class StatDriver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return null;
+		return resList;
 	}
 	
 	/**
@@ -208,7 +208,9 @@ public class StatDriver {
 		Connection connection = DriverManager.getConnection(pdpUrl, dbUser, dbPass);
 		
 		
-		ArrayList <String> tableList =  getTables(connection,flowName,date);
+		Connection lsdaConn = DriverManager.getConnection(lsdaUrl, lsdaDbUser, lsdaDbPass);
+		
+		ArrayList <String> tableList =  getTables(lsdaConn,flowName,date);
 		
 
 		
@@ -253,23 +255,6 @@ public class StatDriver {
 		connection.close();
 
 		////////////////
-		Connection lsdaConn = DriverManager.getConnection(pdpUrl, dbUser, dbPass);
-		String queryRecord = "select * from PDP_FLOW_MONTH where yyyymmdd=? and tabname=?";
-		
-		
-		PreparedStatement lsdaSt = lsdaConn.prepareStatement(queryRecord);
-		
-		lsdaSt.setString(1, date);
-		lsdaSt.setString(2, outputTable);
-		ResultSet querySet = lsdaSt.executeQuery();
-		
-		if(!querySet.next()){
-			String insertRecord = "insert into PDP_FLOW_MONTH(yyyymmdd,tabname) values(?,?)";
-			PreparedStatement insertSt = lsdaConn.prepareStatement(insertRecord);
-			insertSt.setString(1, date);
-			insertSt.setString(2, outputTable);
-			insertSt.executeUpdate();
-		}
 		
 		////////////////////
 		
@@ -291,6 +276,27 @@ public class StatDriver {
 		job.setOutputKeyClass(ResultRecord.class);
 		job.setOutputValueClass(NullWritable.class);
 		job.waitForCompletion(true);
+		
+		
+		/////////////Add an entry to pdp flow month table
+		String queryRecord = "select * from PDP_FLOW_MONTH where yyyymmdd=? and tabname=?";
+		
+		
+		PreparedStatement lsdaSt = lsdaConn.prepareStatement(queryRecord);
+		
+		lsdaSt.setString(1, date);
+		lsdaSt.setString(2, outputTable);
+		ResultSet querySet = lsdaSt.executeQuery();
+		
+		if(!querySet.next()){
+			String insertRecord = "insert into PDP_FLOW_MONTH(yyyymmdd,tabname) values(?,?)";
+			PreparedStatement insertSt = lsdaConn.prepareStatement(insertRecord);
+			insertSt.setString(1, date);
+			insertSt.setString(2, outputTable);
+			insertSt.executeUpdate();
+		}
+		
+		lsdaConn.close();
 		
 	}
 }
