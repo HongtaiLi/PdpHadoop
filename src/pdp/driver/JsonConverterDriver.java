@@ -120,11 +120,15 @@ public class JsonConverterDriver {
 	}
 
 	private static ArrayList <String> getTables(Connection conn,String flow,String yyyymm){
-		String sql = "select tabname from PDP_FLOW_MONTH where yyyymmdd like "+yyyymm+"%";
+		
+		//select tabname from PDP_FLOW_MONTH where flow='BR' and yyyymmdd like "201305%" and LENGTH(yyyymmdd)=8;
+		String sql = "select tabname from PDP_FLOW_MONTH where flow=? and yyyymmdd like\""+yyyymm+"%\""+"and LENGTH(yyyymmdd)=8";
 		ArrayList <String> resList = new ArrayList <String>();
 		
 		try {
 			PreparedStatement pst =  conn.prepareStatement(sql);
+			pst.setString(1, flow);
+			
 			ResultSet rs =  pst.executeQuery();
 		
 			while(rs.next()){
@@ -170,6 +174,7 @@ public class JsonConverterDriver {
 			hadoopHost = prop.getProperty("lsda.hadoop.host");
 			hadoopPort = prop.getProperty("lsda.hadoop.port");
 			dbHost = prop.getProperty("lsda.pdp.db.host");
+			dbName = prop.getProperty("lsda.pdp.db.name");
 			dbPort = prop.getProperty("lsda.pdp.db.port");
 			dbUser = prop.getProperty("lsda.pdp.db.user");
 			dbPass = prop.getProperty("lsda.pdp.db.pass");
@@ -183,13 +188,12 @@ public class JsonConverterDriver {
 		
 		
 	
-		
-		
 		Configuration conf = new Configuration();
 		conf.set("hadoop.job.ugi", "hadoop,supergroup");
 		conf.set("mapred.job.tracker", hadoopHost+":"+hadoopPort);
 		conf.set("dfs.socket.timeout", "1210000");
-		conf.set("mapred.map.tasks", "100");
+		conf.set("mapred.map.tasks", "20");
+		
 		
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 		CommandLine cmd = parseArgs(otherArgs);

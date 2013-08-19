@@ -60,13 +60,13 @@ public class StatDriver {
 
 	private static CommandLine parseArgs(String[] args) throws ParseException {
 		Options options = new Options();
-		Option o = new Option("t", "table", true,
-				"table(DB or HDFS) to read from (must exist)");
-		o.setArgName("table-name");
-		o.setRequired(true);
-		options.addOption(o);
+//		Option o = new Option("t", "table", true,
+//				"table(DB or HDFS) to read from (must exist)");
+//		o.setArgName("table-name");
+//		o.setRequired(true);
+//		options.addOption(o);
 
-		o = new Option("o", "output", true,
+		Option o = new Option("o", "output", true,
 				"the database table name for result");
 		o.setArgName("output-name");
 		o.setRequired(false);
@@ -120,11 +120,14 @@ public class StatDriver {
 	
 	
 	private static ArrayList <String> getTables(Connection conn,String flow,String yyyymm){
-		String sql = "select tabname from PDP_FLOW_MONTH where yyyymmdd like "+yyyymm+"%";
+		String sql = "select tabname from PDP_FLOW_MONTH where flow=? and yyyymmdd like\""+yyyymm+"%\""+"and LENGTH(yyyymmdd)=8";
+			
 		ArrayList <String> resList = new ArrayList <String>();
 		
 		try {
 			PreparedStatement pst =  conn.prepareStatement(sql);
+			pst.setString(1, flow);
+			
 			ResultSet rs =  pst.executeQuery();
 		
 			while(rs.next()){
@@ -171,6 +174,7 @@ public class StatDriver {
 			hadoopHost = prop.getProperty("lsda.hadoop.host");
 			hadoopPort = prop.getProperty("lsda.hadoop.port");
 			dbHost = prop.getProperty("lsda.pdp.db.host");
+			dbName = prop.getProperty("lsda.pdp.db.name");
 			dbPort = prop.getProperty("lsda.pdp.db.port");
 			dbUser = prop.getProperty("lsda.pdp.db.user");
 			dbPass = prop.getProperty("lsda.pdp.db.pass");
@@ -198,8 +202,8 @@ public class StatDriver {
 		// get details
 		//String table = cmd.getOptionValue("t");
 		String date = cmd.getOptionValue("date");
-		String outputTable = cmd.getOptionValue("o");
 		String flowName = cmd.getOptionValue("f");
+		String outputTable = flowName+date+"Stat";
 		String pdpUrl = "jdbc:mysql://"+dbHost+":"+dbPort+"/"+dbName;
 		String lsdaUrl = "jdbc:mysql://"+lsdaDbHost+":"+lsdaDbPort+"/"+lsdaDbName;
 	//		String user = cmd.getOptionValue("u");
@@ -289,10 +293,11 @@ public class StatDriver {
 		ResultSet querySet = lsdaSt.executeQuery();
 		
 		if(!querySet.next()){
-			String insertRecord = "insert into PDP_FLOW_MONTH(yyyymmdd,tabname) values(?,?)";
+			String insertRecord = "insert into PDP_FLOW_MONTH(flow,yyyymmdd,tabname) values(?,?,?)";
 			PreparedStatement insertSt = lsdaConn.prepareStatement(insertRecord);
-			insertSt.setString(1, date);
-			insertSt.setString(2, outputTable);
+			insertSt.setString(1, flowName);
+			insertSt.setString(2, date);
+			insertSt.setString(3, outputTable);
 			insertSt.executeUpdate();
 		}
 		
