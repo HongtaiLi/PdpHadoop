@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Properties;
@@ -70,6 +72,16 @@ public class StatDriver {
 		o.setRequired(false);
 		options.addOption(o);
 
+		o = new Option("date","date",true,"date format yyyymm");
+		o.setArgName("date-name");
+		o.setRequired(true);
+		options.addOption(o);
+		
+		o = new Option("f","flow",true,"flow Name");
+		o.setArgName("flow-name");
+		o.setRequired(true);
+		options.addOption(o);
+		
 //		o = new Option("url", "url", true, "address of database");
 //		o.setArgName("db-address");
 //		o.setRequired(false);
@@ -107,6 +119,24 @@ public class StatDriver {
 	
 	
 	
+	private static ArrayList <String> getTables(Connection conn,String flow,String yyyymm){
+		String sql = "select tabname from PDP_FLOW_MONTH where yyyymmdd like "+yyyymm+"%";
+		ArrayList <String> resList = new ArrayList <String>();
+		
+		try {
+			PreparedStatement pst =  conn.prepareStatement(sql);
+			ResultSet rs =  pst.executeQuery();
+		
+			while(rs.next()){
+				resList.add(rs.getString("tabname"));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	/**
 	 * @param args
 	 * @throws IOException
@@ -115,6 +145,7 @@ public class StatDriver {
 	 * @throws InterruptedException
 	 */
 
+	
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 		
@@ -165,14 +196,20 @@ public class StatDriver {
 		if (cmd.hasOption("d"))
 			conf.set("conf.debug", "true");
 		// get details
-		String table = cmd.getOptionValue("t");
+		//String table = cmd.getOptionValue("t");
+		String date = cmd.getOptionValue("date");
 		String outputTable = cmd.getOptionValue("o");
+		String flowName = cmd.getOptionValue("f");
 		String pdpUrl = "jdbc:mysql://"+dbHost+":"+dbPort+"/"+dbName;
 		String lsdaUrl = "jdbc:mysql://"+lsdaDbHost+":"+lsdaDbPort+"/"+lsdaDbName;
 	//		String user = cmd.getOptionValue("u");
 //		String pass = cmd.getOptionValue("p");
 		
-		String[] tableList = table.split(",");
+		Connection connection = DriverManager.getConnection(pdpUrl, dbUser, dbPass);
+		
+		
+		ArrayList <String> tableList =  getTables(connection,flowName,date);
+		
 
 		
 		// Calculate statistical information of these key value pairs
@@ -186,7 +223,6 @@ public class StatDriver {
 			FileInputFormat.addInputPath(job, new Path(hdfsRoot + tbl));
 		}
 		
-		Connection connection = DriverManager.getConnection(pdpUrl, dbUser, dbPass);
 		DatabaseMetaData metadata = connection.getMetaData();
 		ResultSet resultSet = metadata.getTables(null, null, outputTable, null);
 		
@@ -216,6 +252,27 @@ public class StatDriver {
 
 		connection.close();
 
+		////////////////
+		Connection lsdaConn = DriverManager.getConnection(pdpUrl, dbUser, dbPass);
+		String queryRecord = "select * from PDP_FLOW_MONTH where yyyymmdd=? and tabname=?";
+		
+		
+		PreparedStatement lsdaSt = lsdaConn.prepareStatement(queryRecord);
+		
+		lsdaSt.setString(1, date);
+		lsdaSt.setString(2, outputTable);
+		ResultSet querySet = lsdaSt.executeQuery();
+		
+		if(!querySet.next()){
+			String insertRecord = "insert into PDP_FLOW_MONTH(yyyymmdd,tabname) values(?,?)";
+			PreparedStatement insertSt = lsdaConn.prepareStatement(insertRecord);
+			insertSt.setString(1, date);
+			insertSt.setString(2, outputTable);
+			insertSt.executeUpdate();
+		}
+		
+		////////////////////
+		
 		DBConfiguration.configureDB(job.getConfiguration(),
 				"com.mysql.jdbc.Driver", pdpUrl, dbUser, dbPass);
 
@@ -234,6 +291,6 @@ public class StatDriver {
 		job.setOutputKeyClass(ResultRecord.class);
 		job.setOutputValueClass(NullWritable.class);
 		job.waitForCompletion(true);
-
+		
 	}
 }
