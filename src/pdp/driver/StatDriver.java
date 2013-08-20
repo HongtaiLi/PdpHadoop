@@ -225,8 +225,15 @@ public class StatDriver {
 		job.setReducerClass(StatReducer.class);
 		job.setInputFormatClass(TextInputFormat.class);
 
+		FileSystem fs = FileSystem.get(job.getConfiguration());
+		
 		for(String tbl:tableList){
-			FileInputFormat.addInputPath(job, new Path(hdfsRoot + tbl));
+			
+			Path path = new Path(hdfsRoot + tbl);
+			if(fs.exists(path)){
+				FileInputFormat.addInputPath(job, path);
+			}
+			
 		}
 		
 		DatabaseMetaData metadata = connection.getMetaData();
