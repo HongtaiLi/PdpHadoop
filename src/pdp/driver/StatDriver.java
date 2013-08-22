@@ -155,6 +155,7 @@ public class StatDriver {
 		String configFileDir = System.getenv("PDP_HOME");
 		String hadoopHost = null;
 		String hadoopPort = null;
+		String hadoopUser = null;
 		String dbHost = null;
 		String dbPort = null;
 		String dbName = null;
@@ -173,6 +174,7 @@ public class StatDriver {
 			prop.load(new FileReader(configFileDir + "/" + propFileName));
 			hadoopHost = prop.getProperty("lsda.hadoop.host");
 			hadoopPort = prop.getProperty("lsda.hadoop.port");
+			hadoopUser = prop.getProperty("lsda.hadoop.user");
 			dbHost = prop.getProperty("lsda.pdp.db.host");
 			dbName = prop.getProperty("lsda.pdp.db.name");
 			dbPort = prop.getProperty("lsda.pdp.db.port");
@@ -187,7 +189,7 @@ public class StatDriver {
 		}
 		
 		Configuration conf = new Configuration();
-		conf.set("hadoop.job.ugi", "hadoop,supergroup");
+		conf.set("hadoop.job.ugi", hadoopUser);
 		conf.set("mapred.job.tracker", hadoopHost+":"+hadoopPort);
 		conf.set("dfs.socket.timeout", "1210000");
 
